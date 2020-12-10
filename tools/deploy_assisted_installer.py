@@ -35,7 +35,12 @@ def main():
         raw_data = raw_data.replace('REPLACE_NAMESPACE', f'"{deploy_options.namespace}"')
         data = yaml.safe_load(raw_data)
 
-        image_fqdn = deployment_options.get_image_override(deploy_options, "assisted-service", "SERVICE")
+        var_name = ("SERVICE_OPENSHIFT_CI"
+                    if deploy_options.profile == utils.OPENSHIFT_CI
+                    else "SERVICE")
+        image_fqdn = deployment_options.get_image_override(
+            deploy_options, "assisted-service", var_name)
+
         data["spec"]["replicas"] = deploy_options.replicas_count
         data["spec"]["template"]["spec"]["containers"][0]["image"] = image_fqdn
         if deploy_options.subsystem_test:
