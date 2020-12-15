@@ -55,6 +55,7 @@ def main():
             if deploy_options.profile == utils.OPENSHIFT_CI:
                 # Images built on infra cluster but needed on ephemeral cluster
                 data["spec"]["template"]["spec"]["containers"][0]["imagePullPolicy"] = "IfNotPresent"
+                data["spec"]["template"]["spec"]["containers"][0]["env"].append({'name':'OPENSHIFT_CI_RUN', 'value': 'True'})
             else:
                 data["spec"]["template"]["spec"]["containers"][0]["imagePullPolicy"] = "Never"
         else:

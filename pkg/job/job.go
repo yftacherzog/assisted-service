@@ -50,6 +50,7 @@ type Config struct {
 	ServiceIPs          string        `envconfig:"SERVICE_IPS" default:""`
 	//[TODO] -  change the default of Releae image to "", once everyine wll update their environment
 	SubsystemRun         bool   `envconfig:"SUBSYSTEM_RUN"`
+	OpenshiftciRun       bool   `envconfig:"OPENSHIFT_CI_RUN"`
 	ReleaseImage         string `envconfig:"OPENSHIFT_INSTALL_RELEASE_IMAGE" default:"quay.io/openshift-release-dev/ocp-release@sha256:eab93b4591699a5a4ff50ad3517892653f04fb840127895bb3609b3cc68f98f3"`
 	ReleaseImageMirror   string `envconfig:"OPENSHIFT_INSTALL_RELEASE_IMAGE_MIRROR" default:""`
 	SkipCertVerification bool   `envconfig:"SKIP_CERT_VERIFICATION" default:"false"`
@@ -180,9 +181,9 @@ func getQuantity(s string) resource.Quantity {
 // create discovery image generation job, return job name and error
 func (k *kubeJob) uploadImageJob(jobName, imageName string) *batch.Job {
 	var pullPolicy core.PullPolicy = "Always"
-	# XXX: this might be where out policy is set for assisted-iso-create
-	if k.Config.SubsystemRun {
-		pullPolicy = "Always"
+	// XXX: this might be where our policy is set for assisted-iso-create
+	if k.Config.SubsystemRun && !k.Config.OpenshiftciRun {
+		pullPolicy = "Never"
 	}
 	return &batch.Job{
 		TypeMeta: meta.TypeMeta{
