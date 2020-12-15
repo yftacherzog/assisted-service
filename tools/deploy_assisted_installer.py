@@ -35,11 +35,7 @@ def main():
         raw_data = raw_data.replace('REPLACE_NAMESPACE', f'"{deploy_options.namespace}"')
         data = yaml.safe_load(raw_data)
 
-        var_name = ("SERVICE_OPENSHIFT_CI"
-                    if deploy_options.profile == utils.OPENSHIFT_CI
-                    else "SERVICE")
-        image_fqdn = deployment_options.get_image_override(
-            deploy_options, "assisted-service", var_name)
+        image_fqdn = deployment_options.get_image_override(deploy_options, "assisted-service", "SERVICE")
 
         data["spec"]["replicas"] = deploy_options.replicas_count
         data["spec"]["template"]["spec"]["containers"][0]["image"] = image_fqdn
@@ -55,7 +51,12 @@ def main():
             data["spec"]["template"]["spec"]["containers"][0]["env"].append({'name':'OCM_TOKEN_URL', 'value': 'http://wiremock.assisted-installer.svc.cluster.local:8080/token'})
             data["spec"]["template"]["spec"]["containers"][0]["env"].append({'name':'OCM_SERVICE_CLIENT_ID', 'value': 'mock-ocm-client-id'})
             data["spec"]["template"]["spec"]["containers"][0]["env"].append({'name':'OCM_SERVICE_CLIENT_SECRET', 'value': 'mock-ocm-client-secret'})
-            data["spec"]["template"]["spec"]["containers"][0]["imagePullPolicy"] = "Never"
+
+            if deploy_options.profile == utils.OPENSHIFT_CI:
+                # Images built on infra cluster but needed on ephemeral cluster
+                data["spec"]["template"]["spec"]["containers"][0]["imagePullPolicy"] = "IfNotPresent"
+            else:
+                data["spec"]["template"]["spec"]["containers"][0]["imagePullPolicy"] = "Never"
         else:
             data["spec"]["template"]["spec"]["containers"][0]["imagePullPolicy"] = "Always"
         if deploy_options.target == utils.OCP_TARGET:

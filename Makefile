@@ -26,9 +26,15 @@ endif # TARGET
 ASSISTED_ORG := $(or ${ASSISTED_ORG},quay.io/ocpmetal)
 ASSISTED_TAG := $(or ${ASSISTED_TAG},latest)
 
+# IMAGE_FORMAT set by openshift ci to <registry>/<namespace>/stable:${component}
+component = assisted-service
+export SERVICE := $(IMAGE_FORMAT)
 export SERVICE := $(or ${SERVICE},${ASSISTED_ORG}/assisted-service:${ASSISTED_TAG})
-export SERVICE_OPENSHIFT_CI := $(or ${SERVICE_OPENSHIFT_CI},pipeline:assisted-service)
+
+component = assisted-iso-create
+export ISO_CREATION := $(IMAGE_FORMAT)
 export ISO_CREATION := $(or ${ISO_CREATION},${ASSISTED_ORG}/assisted-iso-create:${ASSISTED_TAG})
+
 CONTAINER_BUILD_PARAMS = --network=host --label git_revision=${GIT_REVISION} ${CONTAINER_BUILD_EXTRA_PARAMS}
 
 # RHCOS_VERSION should be consistent with BaseObjectName in pkg/s3wrapper/client.go
