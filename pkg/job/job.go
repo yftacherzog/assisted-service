@@ -180,8 +180,9 @@ func getQuantity(s string) resource.Quantity {
 // create discovery image generation job, return job name and error
 func (k *kubeJob) uploadImageJob(jobName, imageName string) *batch.Job {
 	var pullPolicy core.PullPolicy = "Always"
+	# XXX: this might be where out policy is set for assisted-iso-create
 	if k.Config.SubsystemRun {
-		pullPolicy = "Never"
+		pullPolicy = "Always"
 	}
 	return &batch.Job{
 		TypeMeta: meta.TypeMeta{
