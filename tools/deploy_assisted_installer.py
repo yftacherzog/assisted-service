@@ -36,6 +36,7 @@ def main():
         data = yaml.safe_load(raw_data)
 
         image_fqdn = deployment_options.get_image_override(deploy_options, "assisted-service", "SERVICE")
+
         data["spec"]["replicas"] = deploy_options.replicas_count
         data["spec"]["template"]["spec"]["containers"][0]["image"] = image_fqdn
         if deploy_options.subsystem_test:
@@ -44,13 +45,19 @@ def main():
             data["spec"]["template"]["spec"]["containers"][0]["env"].append({'name':'CLUSTER_MONITOR_INTERVAL', 'value': TEST_CLUSTER_MONITOR_INTERVAL})
             data["spec"]["template"]["spec"]["containers"][0]["env"].append({'name':'HOST_MONITOR_INTERVAL', 'value': TEST_HOST_MONITOR_INTERVAL})
             data["spec"]["template"]["spec"]["containers"][0]["env"].append({'name': 'JWKS_CERT', 'value': load_key()})
-            data["spec"]["template"]["spec"]["containers"][0]["env"].append({'name':'SUBSYSTEM_RUN', 'value': 'True'})
+            if deploy_options.profile != utils.OPENSHIFT_CI:
+                data["spec"]["template"]["spec"]["containers"][0]["env"].append({'name':'SUBSYSTEM_RUN', 'value': 'True'})
             data["spec"]["template"]["spec"]["containers"][0]["env"].append({'name':'DUMMY_IGNITION', 'value': 'True'})
             data["spec"]["template"]["spec"]["containers"][0]["env"].append({'name':'OCM_BASE_URL', 'value': 'http://wiremock.assisted-installer.svc.cluster.local:8080'})
             data["spec"]["template"]["spec"]["containers"][0]["env"].append({'name':'OCM_TOKEN_URL', 'value': 'http://wiremock.assisted-installer.svc.cluster.local:8080/token'})
             data["spec"]["template"]["spec"]["containers"][0]["env"].append({'name':'OCM_SERVICE_CLIENT_ID', 'value': 'mock-ocm-client-id'})
             data["spec"]["template"]["spec"]["containers"][0]["env"].append({'name':'OCM_SERVICE_CLIENT_SECRET', 'value': 'mock-ocm-client-secret'})
-            data["spec"]["template"]["spec"]["containers"][0]["imagePullPolicy"] = "Never"
+
+            if deploy_options.profile == utils.OPENSHIFT_CI:
+                # Images built on infra cluster but needed on ephemeral cluster
+                data["spec"]["template"]["spec"]["containers"][0]["imagePullPolicy"] = "IfNotPresent"
+            else:
+                data["spec"]["template"]["spec"]["containers"][0]["imagePullPolicy"] = "Never"
         else:
             data["spec"]["template"]["spec"]["containers"][0]["imagePullPolicy"] = "Always"
         if deploy_options.target == utils.OCP_TARGET:

@@ -26,6 +26,9 @@ endif # TARGET
 ASSISTED_ORG := $(or ${ASSISTED_ORG},quay.io/ocpmetal)
 ASSISTED_TAG := $(or ${ASSISTED_TAG},latest)
 
+# IMAGE_FORMAT set by openshift ci to <registry>/<namespace>/stable:${component}
+component = assisted-service
+export SERVICE := $(IMAGE_FORMAT)
 export SERVICE := $(or ${SERVICE},${ASSISTED_ORG}/assisted-service:${ASSISTED_TAG})
 CONTAINER_BUILD_PARAMS = --network=host --label git_revision=${GIT_REVISION} ${CONTAINER_BUILD_EXTRA_PARAMS}
 
@@ -221,6 +224,10 @@ deploy-ui-on-ocp-cluster:
 	export TARGET=ocp && $(MAKE) deploy-ui
 
 jenkins-deploy-for-subsystem: _verify_minikube generate-keys
+	export TEST_FLAGS=--subsystem-test && export ENABLE_AUTH="True" && export DUMMY_IGNITION=${DUMMY_IGNITION} && \
+	$(MAKE) deploy-wiremock deploy-all
+
+openshift-ci-deploy-for-subsystem: generate-keys
 	export TEST_FLAGS=--subsystem-test && export ENABLE_AUTH="True" && export DUMMY_IGNITION=${DUMMY_IGNITION} && \
 	$(MAKE) deploy-wiremock deploy-all
 
